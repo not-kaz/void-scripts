@@ -84,11 +84,10 @@ if [[ "$pw_auto_confirm" =~ ^[Yy]$ ]]; then
 fi
 
 # Install base daily use packages
-base_packages=("base-devel" "ffmpeg" "firefox")
+base_packages=("base-devel" "ffmpeg" "firefox" "noto-fonts-ttf" "noto-fonts-cjk" "noto-fonts-emoji")
 install_packages "${base_packages[@]}"
 
 # Enable GDM
 if [[ "$gnome_confirm" =~ ^[Yy]$ ]]; then
 	sudo ln -s /etc/sv/gdm /var/service/
 fi
-
