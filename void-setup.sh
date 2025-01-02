@@ -84,8 +84,15 @@ if [[ "$pw_auto_confirm" =~ ^[Yy]$ ]]; then
 fi
 
 # Install base daily use packages
-base_packages=("ffmpeg" "firefox" "noto-fonts-ttf" "noto-fonts-cjk" "noto-fonts-emoji")
+base_packages=("git" "git-libsecret" "ffmpeg" "firefox" "noto-fonts-ttf" "noto-fonts-cjk" "noto-fonts-emoji")
 install_packages "${base_packages[@]}"
+
+# Flatpak install prompt
+read -p "Do you want to install 'flatpak' and add 'flathub' repo?" flat_confirm 
+if [[ "$flat_confirm" =~ ^[Yy]$ ]]; then
+	install_packages "flatpak"
+	flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+fi
 
 # Enable GDM
 if [[ "$gnome_confirm" =~ ^[Yy]$ ]]; then
