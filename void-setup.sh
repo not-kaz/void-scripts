@@ -65,7 +65,7 @@ fi
 # Pipewire installation
 read -p "Do you want to install 'pipewire' for audio? (y/n): " pw_install_confirm
 if [[ "$pw_install_confirm" =~ ^[Yy]$ ]]; then
-	install_package "pipewire"
+	install_packages "pipewire"
 fi
 
 # Pipewire autostart
@@ -84,7 +84,7 @@ if [[ "$pw_auto_confirm" =~ ^[Yy]$ ]]; then
 fi
 
 # Install base daily use packages
-base_packages=("base-devel" "ffmpeg" "firefox" "noto-fonts-ttf" "noto-fonts-cjk" "noto-fonts-emoji")
+base_packages=("ffmpeg" "firefox" "noto-fonts-ttf" "noto-fonts-cjk" "noto-fonts-emoji")
 install_packages "${base_packages[@]}"
 
 # Enable GDM
