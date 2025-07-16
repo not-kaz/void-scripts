@@ -15,7 +15,7 @@ BLUE="$(printf '\033[0;34m')"
 NC="$(printf '\033[0m')"
 
 log() {
-   printf "${GREEN}[LOG] %s${NC}\n" "$1"
+	printf "${GREEN}[LOG] %s${NC}\n" "$1"
 }
 
 warn() {
