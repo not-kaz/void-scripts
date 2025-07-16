@@ -28,34 +28,65 @@ Enable DRM modeset for NVIDIA:
 
 ---
 
-## NVIDIA Driver Tweaks (Kernel Module Options)
+## Blacklist Nouveau (Required for NVIDIA Driver)
 
-To preserve video memory on suspend and enable Page Attribute Table (PAT) for better performance:
+Prevent the open-source `nouveau` driver from loading:
 
-1. Create a modprobe config file:
+1. Create a blacklist config file:
 
     ```bash
-    sudo nano /etc/modprobe.d/nvidia.conf
+    sudo nano /etc/modprobe.d/disable-nouveau.conf
     ```
 
 2. Add the following lines:
 
     ```
-    options nvidia NVreg_PreserveVideoMemoryAllocations=1
-    options nvidia NVreg_UsePageAttributeTable=1
+    blacklist nouveau
+    options nouveau modeset=0
     ```
 
-3. Regenerate your initramfs (if applicable):
+3. Regenerate initramfs:
 
     ```bash
     sudo xbps-reconfigure -f linux$(uname -r)
     ```
 
-4. Reboot to apply changes:
+4. Reboot:
 
     ```bash
     sudo reboot
     ```
+
+---
+
+## NVIDIA Driver Kernel Module Options (Enhanced)
+
+Create a config file for NVIDIA driver tweaks:
+
+```bash
+sudo nano /etc/modprobe.d/nvidia.conf
+```
+
+Add the following lines:
+
+```
+options nvidia NVreg_InitializeSystemMemoryAllocations=0 NVreg_EnableResizableBar=1 NVreg_RegistryDwords="RMIntrLockingMode=1"
+options nvidia NVreg_PreserveVideoMemoryAllocations=1
+options nvidia NVreg_UsePageAttributeTable=1
+options nvidia-drm modeset=1
+```
+
+Then regenerate your initramfs:
+
+```bash
+sudo xbps-reconfigure -f linux$(uname -r)
+```
+
+And reboot:
+
+```bash
+sudo reboot
+```
 
 ---
 
