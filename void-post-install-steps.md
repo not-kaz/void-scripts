@@ -28,6 +28,37 @@ Enable DRM modeset for NVIDIA:
 
 ---
 
+## NVIDIA Driver Tweaks (Kernel Module Options)
+
+To preserve video memory on suspend and enable Page Attribute Table (PAT) for better performance:
+
+1. Create a modprobe config file:
+
+    ```bash
+    sudo nano /etc/modprobe.d/nvidia.conf
+    ```
+
+2. Add the following lines:
+
+    ```
+    options nvidia NVreg_PreserveVideoMemoryAllocations=1
+    options nvidia NVreg_UsePageAttributeTable=1
+    ```
+
+3. Regenerate your initramfs (if applicable):
+
+    ```bash
+    sudo xbps-reconfigure -f linux$(uname -r)
+    ```
+
+4. Reboot to apply changes:
+
+    ```bash
+    sudo reboot
+    ```
+
+---
+
 ## Flatpak + Flathub
 
 Enable Flatpak and add the Flathub repository:
