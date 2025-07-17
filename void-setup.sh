@@ -12,15 +12,15 @@ NC="$(printf '\033[0m')"
 DISPLAY_MANAGER=""
 
 log() {
-	printf "${GREEN}[LOG] %s${NC}\n" "$1"
+	printf "%s[LOG] %s%s\n" "$GREEN" "$1" "$NC"
 }
 
 warn() {
-	printf "${YELLOW}[WARNING] %s${NC}\n" "$1" >&2
+	printf "%s[WARNING] %s%s\n" "$YELLOW" "$1" "$NC" >&2
 }
 
 handle_error() {
-	printf "${RED}[ERROR] %s${NC}\n" "$1" >&2
+	printf "%s[ERROR] %s%s\n" "$RED" "$1" "$NC" >&2
 	exit 1
 }
 
