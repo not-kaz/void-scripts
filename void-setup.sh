@@ -174,7 +174,31 @@ install_cron_daemon() {
 }
 
 install_ntp_pkg() {
-	:
+	while true; do
+	# Prompt user for input
+	printf "%s[PROMPT] Choose an NTP package to install (ntp, chrony, openntpd, ntpd-rs or ENTER to skip): %s" "$BLUE" "$NC"
+	read -r choice
+	if [ -z "$choice" ]; then
+	    log "Skipping NTP package installation."
+	    break
+	fi
+	# Convert choice to lowercase manually (POSIX-compliant)
+	choice=$(echo "$choice" | awk '{print tolower($0)}')
+	# Validate the choice and break if valid
+	case "$choice" in
+	    ntp|chrony|openntpd|ntpd-rs)
+		# Install the selected package directly using choice as the pkg
+		install_pkgs "$choice"
+  		log "Enabling '$choice' service..."
+    		enable_service "$choice"
+		break
+		;;
+	    *)
+		echo "Invalid choice, please choose again."
+		# Repeat the loop
+		;;
+	esac
+	done
 }
 
 install_session_mgmt_pkgs() {
@@ -249,7 +273,10 @@ install_gpu_drivers() {
 }
 
 install_fonts() {
-	:
+	# Currently only 'Noto-fonts' family is supported, as it's 'CJK' and 'emoji' coverage provides a consistent look.
+	fonts="noto-fonts-ttf noto-fonts-cjk noto-fonts-emoji"
+
+  	install_pkgs "$fonts"
 }
 
 install_desktop_env() {
@@ -264,17 +291,14 @@ install_audio_pkgs() {
 	if ! is_pkg_installed "elogind"; then
 		warn "'elogind' not installed. Users must be added to 'audio' and 'video' groups for PipeWire to work properly."
 	fi
-
 	# We only support Pipewire.
 	install_pkgs "pipewire"
-
 	if [ ! -d ${dest} ]; then
 		log "Creating folder '$dest' for Pipewire PulseAudio config."
 		mkdir -p ${dest}
 	else
 		log "Pipewire PulseAudio config directory already exists. Skipping..."
 	fi
-
 	# Configure Pipewire to use PulseAudio interface.
 	if [ -f "${src}${conf}" ] && [ ! -e "${dest}${conf}" ]; then
 		log "Creating PipeWire conf..."
@@ -315,7 +339,6 @@ main() {
 	xbps-install -Su xbps || handle_error "Failed to update XBPS."
 	xbps-install -Syu || handle_error "Failed to update XBPS database."
 	log "Updated XBPS and database successfully."
-
 	install_sub_repos all
 	install_firmware_pkgs
 	install_ntp_pkg
@@ -325,7 +348,6 @@ main() {
 	install_desktop_env
 	install_audio_pkgs
 	enable_display_manager
-
 	log "Void setup script finished successfully." 
 	log "Reboot for changes to take effect."
 }
