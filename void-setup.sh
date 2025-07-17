@@ -9,6 +9,8 @@ YELLOW="$(printf '\033[1;33m')"
 BLUE="$(printf '\033[0;34m')"
 NC="$(printf '\033[0m')"
 
+DISPLAY_MANAGER=""
+
 log() {
 	printf "${GREEN}[LOG] %s${NC}\n" "$1"
 }
@@ -121,16 +123,20 @@ install_sub_repos() {
 }
 
 install_firmware_pkgs() {
-	choice=""
 	while true; do
 		printf "%s[PROMPT] Which firmware package? (amd/intel or ENTER to skip): %s" "$BLUE" "$NC"
 		read -r choice
+    	if [ -z "$choice" ]; then
+			warn "Skipping firmware installation..."
+   			return 0
+		fi
+		choice=$(printf '%s\n' "$choice" | tr '[:upper:]' '[:lower:]')
 		case "$choice" in
-			amd|AMD) 
+			amd) 
 				install_pkgs "linux-firmware-amd"
 				return 0
 				;;
-			intel|INTEL) 
+			intel) 
 				install_pkgs "intel-ucode"
 				return 0
 				;;
@@ -138,39 +144,43 @@ install_firmware_pkgs() {
 				return 0
 				;;
 			*) log "Please answer amd, intel or press ENTER to skip."
+   				continue
 				;;
 		esac
 	done
 }
 
-install_cron_daemon() {
-	choice=""
-	# TODO: Implement case-insensitive choice and use it to enable the appropriate service.
-	# TODO: Check if user already has ANY cron daemon installed to prevent bloat.
+install_cron_pkg() {
 	while true; do
 		printf "%s[PROMPT] Which cron daemon? (cronie/dcron/fcron or ENTER to skip): %s" "$BLUE" "$NC"
 		read -r choice
-		case "$choice" in
-			cronie|CRONIE|Cronie) 
-				install_pkgs "cronie"
-				return 0
+  		if [ -z "$choice" ]; then
+			warn "Skipping cron daemon installation..."
+   			return 0
+		fi
+		choice=$(printf '%s\n' "$choice" | tr '[:upper:]' '[:lower:]')
+  		case "$choice" in
+		    cronie|dcron|fcron)
+				install_pkgs "$choice"
+				log "Enabling '$choice' service..."
+				enable_service "$choice"
+				break
 				;;
-			dcron|DCRON|Dcron) 
-				install_pkgs "dcron"
-				return 0
-				;;
-			fcron|FCRON|Fcron) 
-				install_pkgs "fcron"
-				return 0
-				;;
-			"") 
-				return 0
-				;;
-			*) log "Please answer 'cronie', 'dcron', 'fcron' or press ENTER to skip: "
+		    *)
+				log "Invalid choice, try again."
+				continue
 				;;
 		esac
 	done
-	# TODO: Enable weekly ssd trim
+  	if prompt_user "Do you wish to enable a weekly SSD trim cron job with '$choice'? (Recommended)"; then
+		if [ -n "$choice" ]; then
+  			CRON_JOB_PATH="/etc/cron.weekly/fstrim"
+	 
+		    mkdir -p "$(dirname "$CRON_JOB_PATH")"
+			printf "#!/bin/sh\nfstrim /\n" > "$CRON_JOB_PATH"
+		    chmod +x "$CRON_JOB_PATH"
+		fi
+  	fi
 }
 
 install_ntp_pkg() {
@@ -180,25 +190,34 @@ install_ntp_pkg() {
 		read -r choice
 		if [ -z "$choice" ]; then
 		    log "Skipping NTP package installation."
-		    break
+		    return 0
 		fi
 		# Convert choice to lowercase manually (POSIX-compliant)
-		choice=$(echo "$choice" | awk '{print tolower($0)}')
+		choice=$(printf '%s\n' "$choice" | tr '[:upper:]' '[:lower:]')
 		# Validate the choice and break if valid
 		case "$choice" in
-		    ntp|chrony|openntpd|ntpd-rs)
-			# Install the selected package directly using choice as the pkg
-			install_pkgs "$choice"
-			log "Enabling '$choice' service..."
-			enable_service "$choice"
-			break
-			;;
+		    ntp)
+	  			service="isc-ntpd"
+	  			;;
+	  		chrony)
+	 			service="chronyd"
+	 			;;
+	 		openntpd)
+				 service="openntpd"
+	 			;;
+			ntpd-rs)
+   	 			service="ntpd-rs"
+				;;
 		    *)
-			echo "Invalid choice, please choose again."
-			# Repeat the loop
-			;;
+				log "Invalid choice, try again."
+				# TODO: Check if 'continue' is POSIX compliant
+				continue
+				;;
 		esac
 	done
+ 	log "Installing '$choice' and enabling '$service' daemon..."
+ 	install_pkgs "$choice"
+  	enable_service "$service"
 }
 
 install_session_mgmt_pkgs() {
@@ -213,8 +232,8 @@ install_session_mgmt_pkgs() {
 }
 
 install_gpu_drivers() {
+	# TODO: If possible, move these variables closer to execution point.
 	gpu_info=$(lspci | grep -i 'vga\|3d\|display')
-	choice=""
 	gpu_pkgs="xorg"
 
 	while true; do
@@ -261,6 +280,14 @@ install_gpu_drivers() {
 				fi
 				gpu_pkgs="$gpu_pkgs nvidia xf86-video-nouveau mesa-dri mesa-dri-32bit nvidia-libs-32bit"
 				install_pkgs "$gpu_pkgs"
+				mkdir -p /etc/modprobe.d/
+	 			# TODO: This can be tidied up a bit, too much repetition.
+				printf "blacklist nouveau\noptions nouveau modeset=0" > /etc/modprobe.d/disable-nouveau.conf
+				printf "options nvidia NVreg_InitializeSystemMemoryAllocations=0 NVreg_EnableResizableBar=1 NVreg_RegistryDwords=\"RMIntrLockingMode=1\"\n" > /etc/modprobe.d/nvidia-options.conf
+				printf "options nvidia NVreg_PreserveVideoMemoryAllocations=1\n" >> /etc/modprobe.d/nvidia-options.conf
+				printf "options nvidia NVreg_UsePageAttributeTable=1\n" >> /etc/modprobe.d/nvidia-options.conf
+				printf "options nvidia-drm modeset=1\n" >> /etc/modprobe.d/nvidia-options.conf
+				xbps-reconfigure -fa
 				return 0
 				;;
 			"") 
@@ -280,7 +307,44 @@ install_fonts() {
 }
 
 install_desktop_env() {
-	
+	while true; do
+		printf "%s[PROMPT] Choose an desktop environment to install (gnome/kde/xfce or ENTER to skip): %s" "$BLUE" "$NC"
+		read -r choice
+		if [ -z "$choice" ]; then
+			log "Skipping DE installation."
+			break
+		fi
+		choice=$(printf '%s\n' "$choice" | tr '[:upper:]' '[:lower:]')
+  		# TODO: Add and test other DE choices.
+		case "$choice" in
+		    gnome)
+      			if ! is_service_enabled "dbus"; then
+		 		log "'dbus' service not found, reinstalling package and attemping to enable it.\
+	    				Required for GNOME to function properly."
+		 		install_pkgs "dbus"
+				enable_service "dbus"
+		 		fi
+				install_pkgs "$choice"
+				log "Installed 'GNOME' desktop environment package. Display manager assigned, it will be enabled at the end of the script."
+				if prompt_user "Do you wish to install and enable 'NetworkManager' service with GNOME? (Recommended)"; then
+	   				install_pkgs "NetworkManager"
+	       			# Disable any other network services that could conflict with NetworkManager
+	   				disable_service "dhcpd"
+	       			disable_service "wpa_supplicant"
+		          	disable_service "wicd"
+		     		enable_service "NetworkManager"
+	   			fi
+	   			# Allow GDM to run under Wayland with Nvidia.
+	   			ln -s /dev/null /etc/udev/rules.d/61-gdm.rules
+	   			log "GNOME display manager will be enabled at the end of script."
+				break
+				;;
+		    *)
+			echo "Invalid choice, please choose again."
+				continue
+				;;
+		esac
+	done
 }
 
 install_audio_pkgs() {
@@ -309,25 +373,46 @@ install_audio_pkgs() {
 }
 
 install_flatpak() {
-	# Offer to add flathub repo.
-	:
+	# TODO: Add more output here and maybe some error checking for 'flatpak remote-add'.
+	if prompt_user "Install 'flatpak' and add the 'flathub' repository? (Recommended)"; then
+ 		install_pkgs "flatpak"
+   		flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+ 	fi
 }
 
 install_additional_pkgs() {
-	# User requested packages to install.
-	:
+	printf "Install any additional packages (Press ENTER to skip): "
+	read -r choice
+	if [ -n "$choice" ]; then
+		install_pkgs "$choice"
+	fi
 }
 
 do_perf_tweaks() {
 	# Esync compatibility for game performance.
 	# Tweak sysctl for more game compatibility.
-	:
+	if prompt_user "Modify system to be compatible with 'esync' for game performance and adjust 'sysctl' values for game stability? (Recommended) "; then
+ 		# TODO: Improve this prompt, it's lacking clarification. It needs to be the actual username, not display name etc."
+ 		printf "[PROMPT] Provide username: "
+ 		read -r $username
+   		if [ -n "$username" ] && [ -f /etc/security/limits.conf ]; then
+	 		log "Modifying 'ulimits' in '/etc/security/limits.conf' for 'esync' compatiblity..."
+			printf "%s hard nofile 524288" >> /etc/security/limits.conf
+   			mkdir -p /etc/sysctl.d/
+	  		printf "vm.max_map_count=2147483642" > /etc/sysctl.d/80-gamecompatibility.conf
+		 	if prompt_user "Install 'gamemode' package? (Recommended) "; then
+		 		install_pkgs "gamemode"
+	 			usermod -aG gamemode "$username"
+		 	fi
+   		fi
+	fi
 }
 
 enable_display_manager() {
-	# Inform user that this might start display manager right away, if they do not want to, they should enable manually.
-	# If running GDM + Wayland + Nvidia, offer to create udev rule.
-	:
+	if [ -n "$DISPLAY_MANAGER" ]; then
+ 		log "Enabling display manager..."
+ 		enable_service "$DISPLAY_MANAGER"
+   	fi
 }
 
 main() {
@@ -341,6 +426,7 @@ main() {
 	log "Updated XBPS and database successfully."
 	install_sub_repos all
 	install_firmware_pkgs
+ 	install_cron_pkg
 	install_ntp_pkg
 	install_session_mgmt_pkgs
 	install_gpu_drivers
