@@ -175,29 +175,29 @@ install_cron_daemon() {
 
 install_ntp_pkg() {
 	while true; do
-	# Prompt user for input
-	printf "%s[PROMPT] Choose an NTP package to install (ntp, chrony, openntpd, ntpd-rs or ENTER to skip): %s" "$BLUE" "$NC"
-	read -r choice
-	if [ -z "$choice" ]; then
-	    log "Skipping NTP package installation."
-	    break
-	fi
-	# Convert choice to lowercase manually (POSIX-compliant)
-	choice=$(echo "$choice" | awk '{print tolower($0)}')
-	# Validate the choice and break if valid
-	case "$choice" in
-	    ntp|chrony|openntpd|ntpd-rs)
-		# Install the selected package directly using choice as the pkg
-		install_pkgs "$choice"
-  		log "Enabling '$choice' service..."
-    		enable_service "$choice"
-		break
-		;;
-	    *)
-		echo "Invalid choice, please choose again."
-		# Repeat the loop
-		;;
-	esac
+		# Prompt user for input
+		printf "%s[PROMPT] Choose an NTP package to install (ntp, chrony, openntpd, ntpd-rs or ENTER to skip): %s" "$BLUE" "$NC"
+		read -r choice
+		if [ -z "$choice" ]; then
+		    log "Skipping NTP package installation."
+		    break
+		fi
+		# Convert choice to lowercase manually (POSIX-compliant)
+		choice=$(echo "$choice" | awk '{print tolower($0)}')
+		# Validate the choice and break if valid
+		case "$choice" in
+		    ntp|chrony|openntpd|ntpd-rs)
+			# Install the selected package directly using choice as the pkg
+			install_pkgs "$choice"
+			log "Enabling '$choice' service..."
+			enable_service "$choice"
+			break
+			;;
+		    *)
+			echo "Invalid choice, please choose again."
+			# Repeat the loop
+			;;
+		esac
 	done
 }
 
@@ -280,7 +280,7 @@ install_fonts() {
 }
 
 install_desktop_env() {
-	:
+	
 }
 
 install_audio_pkgs() {
