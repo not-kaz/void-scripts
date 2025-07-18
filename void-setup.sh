@@ -356,27 +356,19 @@ install_desktop_env() {
 }
 
 install_audio_pkgs() {
-	conf="20-pipewire-pulse.conf"
-	src="/usr/share/examples/pipewire/"
-	dest="/etc/pipewire/pipewire.conf.d/"
-
 	if ! is_pkg_installed "elogind"; then
 		warn "'elogind' not installed. Users must be added to 'audio' and 'video' groups for PipeWire to work properly."
 	fi
 	# We only support Pipewire.
 	install_pkgs "pipewire"
-	if [ ! -d "${dest}" ]; then
-		log "Creating folder '$dest' for Pipewire PulseAudio config."
-		mkdir -p "${dest}"
-	else
-		log "Pipewire PulseAudio config directory already exists. Skipping..."
-	fi
-	# Configure Pipewire to use PulseAudio interface.
-	if [ -f "${src}${conf}" ] && [ ! -e "${dest}${conf}" ]; then
+ 	dest_dir="/etc/pipewire/pipewire.conf.d/"
+	mkdir -p "${dest}"
+ 	src_dir="/usr/share/examples/pipewire/"
+	conf_name="20-pipewire-pulse.conf"
+ 	log "Setting up PipeWire's PulseAudio interface..."
+	if [ -f "${src_dir}${conf_name}" ] && [ ! -e "${dest_dir}${conf_name}" ]; then
 		log "Creating PipeWire conf..."
-		ln -s "${src}${conf}" "${dest}${conf}"
-	else 
-		log "Pipewire config already setup. Skipping..."
+		ln -s "${src_dir}${conf_name}" "${dest_dir}${conf_name}"
 	fi
 }
 
