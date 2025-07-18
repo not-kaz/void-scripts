@@ -84,7 +84,7 @@ enable_service() {
 
 disable_service() {
 	service="$1"
-	if [ -f "/var/service/$service" ]; then
+	if [ -L "/var/service/$service" ]; then
 		rm /var/service/$service
 		log "Disabled service '$service'."
 	else
