@@ -93,7 +93,7 @@ disable_service() {
 }
 
 is_service_enabled() {
-	[ -L "/var/service/$1" ] && log "Service $1 is already enabled."
+	[ -L "/var/service/$1" ]
 }
 
 install_sub_repos() {
