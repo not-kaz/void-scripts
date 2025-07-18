@@ -64,7 +64,7 @@ install_pkgs() {
 
 	if [ -n "$pkgs_to_install" ]; then
 		log "Installing packages: $pkgs_to_install"
-		xbps-install -y "$pkgs_to_install" || handle_error "Failed to install packages."
+		xbps-install -y "$@" || handle_error "Failed to install packages."
 	fi
 }
 
