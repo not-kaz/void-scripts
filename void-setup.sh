@@ -418,7 +418,7 @@ enable_display_manager() {
 
 main() {
 	# Check if XBPS is present on system and update it
-	if ! command -v xbps-install >/dev/null 2>&1 && ! command -v xbps-query >/dev/null 2>&1; then
+	if ! command -v xbps-install >/dev/null 2>&1 || ! command -v xbps-query >/dev/null 2>&1; then
 		handle_error "XBPS not found. Couldn't run xbps-install or xbps-query."
 	fi
 	log "Updating XBPS and repository database..."
