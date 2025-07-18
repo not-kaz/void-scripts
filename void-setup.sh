@@ -335,7 +335,7 @@ install_desktop_env() {
 				if prompt_user "Do you wish to install and enable 'NetworkManager' service with GNOME? (Recommended)"; then
 	   			install_pkgs "NetworkManager"
 	       			# Disable any other network services that could conflict with NetworkManager
-	   			disable_service "dhcpd"
+	   			disable_service "dhcpcd"
 	       		disable_service "wpa_supplicant"
 		  		disable_service "wicd"
 				enable_service "NetworkManager"
