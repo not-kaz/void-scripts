@@ -342,7 +342,7 @@ install_desktop_env() {
 	   			fi
        				# TODO: Check if user is running on Nvidia before doing this.
        				log "Adding 'udev' rule for GNOME/GDM to function with Wayland/Nvidia..."
-	   			ln -s /dev/null /etc/udev/rules.d/61-gdm.rules
+	   			ln -sf /dev/null /etc/udev/rules.d/61-gdm.rules
 	   			log "GNOME display manager will be enabled at the end of script."
 	   			DISPLAY_MANAGER="gdm"
 				break
@@ -365,9 +365,9 @@ install_audio_pkgs() {
 	fi
 	# We only support Pipewire.
 	install_pkgs "pipewire"
-	if [ ! -d ${dest} ]; then
+	if [ ! -d "${dest}" ]; then
 		log "Creating folder '$dest' for Pipewire PulseAudio config."
-		mkdir -p ${dest}
+		mkdir -p "${dest}"
 	else
 		log "Pipewire PulseAudio config directory already exists. Skipping..."
 	fi
@@ -442,6 +442,8 @@ main() {
 	install_fonts
 	install_desktop_env
 	install_audio_pkgs
+ 	install_flatpak
+	install_additional_pkgs
  	do_perf_tweaks
 	enable_display_manager
 	log "Void setup script finished successfully." 
