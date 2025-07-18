@@ -362,7 +362,7 @@ install_audio_pkgs() {
 	# We only support Pipewire.
 	install_pkgs "pipewire"
  	dest_dir="/etc/pipewire/pipewire.conf.d/"
-	mkdir -p "${dest}"
+	mkdir -p "${dest_dir}"
  	src_dir="/usr/share/examples/pipewire/"
 	conf_name="20-pipewire-pulse.conf"
  	log "Setting up PipeWire's PulseAudio interface..."
@@ -410,13 +410,14 @@ do_perf_tweaks() {
 }
 
 enable_display_manager() {
-	if [ -n "$DISPLAY_MANAGER" ]; then
+	if [ -n "$DISPLAY_MANAGER" ] && ! is_service_enabled "$DISPLAY_MANAGER"; then
  		log "Enabling display manager..."
  		enable_service "$DISPLAY_MANAGER"
    	fi
 }
 
 main() {
+	[ "$(id -u)" -eq 0 ] || handle_error "This script must be run as root."
 	# Check if XBPS is present on system and update it
 	if ! command -v xbps-install >/dev/null 2>&1 || ! command -v xbps-query >/dev/null 2>&1; then
 		handle_error "XBPS not found. Couldn't run xbps-install or xbps-query."
