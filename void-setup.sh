@@ -172,7 +172,7 @@ install_cron_pkg() {
 				;;
 		esac
 	done
-  	if prompt_user "Do you wish to enable a weekly SSD trim cron job with '$choice'? (Recommended)"; then
+  	if prompt_user "Do you wish to enable a weekly SSD trim on '/' directory  with '$choice'? (Recommended)"; then
 		if [ -n "$choice" ]; then
   			CRON_JOB_PATH="/etc/cron.weekly/fstrim"
 	 
@@ -237,9 +237,11 @@ install_session_mgmt_pkgs() {
 
 install_gpu_drivers() {
 	# TODO: If possible, move these variables closer to execution point.
+ 	if ! is_pkg_installed "pciutils"; then
+  		install_pkgs "pciutils"
+  	fi
 	gpu_info=$(lspci | grep -i 'vga\|3d\|display')
-	gpu_pkgs="xorg"
-
+ 	gpu_pkgs="xorg"
 	while true; do
 		printf "%s[PROMPT] Which GPU vendor drivers? (amd/nvidia or ENTER to skip): %s" "$BLUE" "$NC"
 		read -r choice
@@ -266,8 +268,8 @@ install_gpu_drivers() {
 			nvidia|NVIDIA) 
 				# Check if Nvidia adapter is detected
 				if echo "$gpu_info" | grep -iq 'nvidia'; then
-					if ! is_pkg_installed "void-repo-nonfree" && ! is_pkg_installed "void-repo-multilib-nonfree"; then
-						if prompt_user "NVIDIA drivers require 'non-free' repositories. Install them?"; then
+					if ! is_pkg_installed "void-repo-nonfree" && ! is_pkg_installed "void-repo-multilib-nonfree" && ! is_pkg_installed "void-repo-multilib"; then
+						if prompt_user "NVIDIA drivers require 'non-free' and 'multilib' repositories. Install them?"; then
 							install_sub_repos
 						else
 							log "Returning to GPU vendor select. Press ENTER to skip GPU driver installation."
@@ -338,7 +340,8 @@ install_desktop_env() {
 		  		disable_service "wicd"
 				enable_service "NetworkManager"
 	   			fi
-	   			# Allow GDM to run under Wayland with Nvidia.
+       				# TODO: Check if user is running on Nvidia before doing this.
+       				log "Adding 'udev' rule for GNOME/GDM to function with Wayland/Nvidia..."
 	   			ln -s /dev/null /etc/udev/rules.d/61-gdm.rules
 	   			log "GNOME display manager will be enabled at the end of script."
 	   			DISPLAY_MANAGER="gdm"
@@ -402,9 +405,10 @@ do_perf_tweaks() {
  		read -r username
    		if [ -n "$username" ] && [ -f /etc/security/limits.conf ]; then
 	 		log "Modifying 'ulimits' in '/etc/security/limits.conf' for 'esync' compatiblity..."
-			printf "%s hard nofile 524288" >> /etc/security/limits.conf
+			printf "%s\thard\tnofile\t524288\n" "$username" >> /etc/security/limits.conf
+   			log "Increasing vm.max_map_count for game compatiblity."
    			mkdir -p /etc/sysctl.d/
-	  		printf "vm.max_map_count=2147483642" > /etc/sysctl.d/80-gamecompatibility.conf
+	  		printf "vm.max_map_count=2147483642\n" > /etc/sysctl.d/80-gamecompatibility.conf
 		 	if prompt_user "Install 'gamemode' package? (Recommended) "; then
 		 		install_pkgs "gamemode"
 	 			usermod -aG gamemode "$username"
@@ -438,6 +442,7 @@ main() {
 	install_fonts
 	install_desktop_env
 	install_audio_pkgs
+ 	do_perf_tweaks
 	enable_display_manager
 	log "Void setup script finished successfully." 
 	log "Reboot for changes to take effect."
