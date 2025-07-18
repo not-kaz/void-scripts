@@ -90,6 +90,36 @@ sudo reboot
 
 ---
 
+## NVIDIA Suspend/Resume glitch fix
+
+First, we need to disable Nvidia's nvidia-sleep.sh:
+
+```bash
+sudo mkdir -p /usr/libexec/elogind/backup
+sudo mv /usr/libexec/elogind/system-sleep/nvidia.sh /usr/libexec/elogind/backup/nvidia.sh.bk
+```
+
+Next, we can make elogind use zzz:
+
+Open the elogind sleep config file:
+```bash
+vim /etc/elogind/sleep.conf
+```
+
+Uncomment and set the following parameters:
+```bash
+AllowSuspend=yes
+SuspendByUsing=/usr/bin/zzz
+HibernateByUsing=/usr/bin/ZZZ
+```
+
+Open terminal and reload elogind:
+```bash
+loginctl reload
+```
+
+---
+
 ## Flatpak + Flathub
 
 Enable Flatpak and add the Flathub repository:
