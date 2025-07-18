@@ -399,7 +399,7 @@ do_perf_tweaks() {
 	if prompt_user "Modify system to be compatible with 'esync' for game performance and adjust 'sysctl' values for game stability? (Recommended) "; then
  		# TODO: Improve this prompt, it's lacking clarification. It needs to be the actual username, not display name etc."
  		printf "[PROMPT] Provide username: "
- 		read -r $username
+ 		read -r username
    		if [ -n "$username" ] && [ -f /etc/security/limits.conf ]; then
 	 		log "Modifying 'ulimits' in '/etc/security/limits.conf' for 'esync' compatiblity..."
 			printf "%s hard nofile 524288" >> /etc/security/limits.conf
