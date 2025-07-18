@@ -314,7 +314,7 @@ install_fonts() {
 
 install_desktop_env() {
 	while true; do
-		printf "%s[PROMPT] Choose an desktop environment to install (gnome/kde/xfce or ENTER to skip): %s" "$BLUE" "$NC"
+		printf "%s[PROMPT] Choose a desktop environment to install (gnome/kde/xfce or ENTER to skip): %s" "$BLUE" "$NC"
 		read -r choice
 		if [ -z "$choice" ]; then
 			log "Skipping DE installation."
@@ -325,7 +325,7 @@ install_desktop_env() {
 		case "$choice" in
 		    gnome)
       			if ! is_service_enabled "dbus"; then
-		 		log "'dbus' service not found, reinstalling package and attemping to enable it.\
+		 		log "'dbus' service not found, reinstalling package and attempting to enable it.\
 	    				Required for GNOME to function properly."
 		 		install_pkgs "dbus"
 				enable_service "dbus"
