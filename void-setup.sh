@@ -198,15 +198,19 @@ install_ntp_pkg() {
 		case "$choice" in
 		    ntp)
 	  			service="isc-ntpd"
+      				break
 	  			;;
 	  		chrony)
 	 			service="chronyd"
+           			break
 	 			;;
 	 		openntpd)
-				 service="openntpd"
+				service="openntpd"
+           			break
 	 			;;
 			ntpd-rs)
    	 			service="ntpd-rs"
+	      			break
 				;;
 		    *)
 				log "Invalid choice, try again."
@@ -327,16 +331,17 @@ install_desktop_env() {
 				install_pkgs "$choice"
 				log "Installed 'GNOME' desktop environment package. Display manager assigned, it will be enabled at the end of the script."
 				if prompt_user "Do you wish to install and enable 'NetworkManager' service with GNOME? (Recommended)"; then
-	   				install_pkgs "NetworkManager"
+	   			install_pkgs "NetworkManager"
 	       			# Disable any other network services that could conflict with NetworkManager
-	   				disable_service "dhcpd"
-	       			disable_service "wpa_supplicant"
-		          	disable_service "wicd"
-		     		enable_service "NetworkManager"
+	   			disable_service "dhcpd"
+	       		disable_service "wpa_supplicant"
+		  		disable_service "wicd"
+				enable_service "NetworkManager"
 	   			fi
 	   			# Allow GDM to run under Wayland with Nvidia.
 	   			ln -s /dev/null /etc/udev/rules.d/61-gdm.rules
 	   			log "GNOME display manager will be enabled at the end of script."
+	   			DISPLAY_MANAGER="gdm"
 				break
 				;;
 		    *)
